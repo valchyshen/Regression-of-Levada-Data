@@ -209,7 +209,18 @@ m5 <- lm(gc.net ~ war_dummy)
 
 # Tests for stationarity
 #
-gc.adf$p.value; gc.nt.adf$p.value; pa.adf$p.value; pa.net.adf$p.value
+# raw time series
+pv <- c(adf.test(lvd.ts.ges[,1])$p.value, adf.test(lvd.ts.ges[,4])$p.value, 
+        adf.test(lvd.ts.ptn[,1])$p.value, adf.test(lvd.ts.ptn[,4])$p.value)
+pv <- cbind(as.data.frame(pv),ind="Raw times series",
+            ts=c("gc","gc.net","pa","pa.net"))
+# 1st differences
+pv <- rbind(pv, 
+            data.frame(pv=c(gc.adf$p.value, gc.nt.adf$p.value, 
+                            pa.adf$p.value, pa.net.adf$p.value),
+                       ind="1st difference",ts=c("gc","gc.net","pa","pa.net")
+                       )
+            )
 # ... all 4 values above of p-value = 0.01
 summary(ur.df(gc, type = "drift", 6))
 summary(ur.df(gc.net, type = "drift", 6))
@@ -217,6 +228,9 @@ summary(ur.df(pa, type = "drift", 6))
 summary(ur.df(pa.net, type = "drift", 6))
 # ... in all 4 lines above ==>> p-value: < 2.2e-16
 # hence, times series gc, gc.net, pa, pa.net are stationary
+library(xtable)
+pv <- pv %>% group_by(ind,ts) %>% summarise(pv=sum(pv)) %>% pivot_wider(names_from = ts, values_from = pv)
+xtable(pv, type = "latex")
 
 library(stargazer)
 stargazer(m4,m5,m2,m3, type = "text",
